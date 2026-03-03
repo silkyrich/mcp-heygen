@@ -1,0 +1,19 @@
+{
+  "name": "mcp-heygen",
+  "version": "1.0.0",
+  "description": "HeyGen avatar video MCP server — generate talking head videos from text",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "typescript": "^5.8.3"
+  }
+}
