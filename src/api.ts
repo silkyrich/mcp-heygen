@@ -36,7 +36,7 @@ interface CreditsResponse {
 }
 
 export async function getCredits(): Promise<{ remaining: number; details: Record<string, unknown> }> {
-  const resp = await request<CreditsResponse>("GET", "/v1/video_translate.get_character_credit");
+  const resp = await request<CreditsResponse>("GET", "/v2/user/remaining_quota");
   const data: Record<string, unknown> = (resp.data as any) ?? (resp as any);
   return {
     remaining: (data.remaining_quota ?? data.plan_credit ?? 0) as number,
