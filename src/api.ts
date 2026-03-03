@@ -38,8 +38,10 @@ interface CreditsResponse {
 export async function getCredits(): Promise<{ remaining: number; details: Record<string, unknown> }> {
   const resp = await request<CreditsResponse>("GET", "/v2/user/remaining_quota");
   const data: Record<string, unknown> = (resp.data as any) ?? (resp as any);
+  const quota = (data.remaining_quota as number) || 0;
+  const planCredit = (data.plan_credit as number) || 0;
   return {
-    remaining: (data.remaining_quota ?? data.plan_credit ?? 0) as number,
+    remaining: Math.max(quota, planCredit),
     details: (data.details as Record<string, unknown>) ?? data,
   };
 }
