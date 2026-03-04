@@ -13,6 +13,7 @@ import {
   uploadTalkingPhoto,
   generateVideo,
   getVideoStatus,
+  deleteVideo,
   type Voice,
   type Avatar,
   type VideoScene,
@@ -277,6 +278,34 @@ server.tool(
 
       return {
         content: [{ type: "text" as const, text: lines.join("\n") }],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool 7: delete_video ---
+
+server.tool(
+  "delete_video",
+  "Delete a HeyGen video generation job. Use this to cancel stuck/processing videos or clean up completed ones.",
+  {
+    video_id: z.string().describe("Video ID to delete"),
+  },
+  async ({ video_id }) => {
+    try {
+      const { deleted } = await deleteVideo(video_id);
+      return {
+        content: [{
+          type: "text" as const,
+          text: deleted
+            ? `Video \`${video_id}\` deleted successfully.`
+            : `Video \`${video_id}\` could not be deleted (may already be deleted or not found).`,
+        }],
       };
     } catch (err) {
       return {

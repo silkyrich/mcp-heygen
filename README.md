@@ -31,6 +31,9 @@ Returns a `video_id` for status polling.
 ### `get_avatar_video_status`
 Poll video generation progress. When complete, returns the video URL (expires in 7 days). Optionally downloads the video to the output directory.
 
+### `delete_video`
+Delete a video generation job. Use to cancel stuck/processing videos or clean up completed ones.
+
 ## Setup
 
 ### Build

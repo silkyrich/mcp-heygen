@@ -209,3 +209,17 @@ export async function getVideoStatus(videoId: string): Promise<VideoStatus> {
   const resp = await request<StatusResponse>("GET", `/v1/video_status.get?video_id=${videoId}`);
   return resp.data;
 }
+
+// --- Video Delete ---
+
+interface DeleteResponse {
+  code: number;
+  data: { Deleted: string[]; Failed: string[] };
+  message: string;
+}
+
+export async function deleteVideo(videoId: string): Promise<{ deleted: boolean }> {
+  const resp = await request<DeleteResponse>("DELETE", `/v1/video.delete?video_id=${videoId}`);
+  const deleted = resp.data?.Deleted?.includes(videoId) ?? false;
+  return { deleted };
+}
