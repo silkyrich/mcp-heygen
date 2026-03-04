@@ -35,15 +35,14 @@ interface CreditsResponse {
   };
 }
 
-export async function getCredits(): Promise<{ remaining: number; details: Record<string, unknown> }> {
+export async function getCredits(): Promise<{ remaining: number; api: number; plan: number; details: Record<string, unknown> }> {
   const resp = await request<CreditsResponse>("GET", "/v2/user/remaining_quota");
-  const data: Record<string, unknown> = (resp.data as any) ?? (resp as any);
-  const quota = (data.remaining_quota as number) || 0;
-  const planCredit = (data.plan_credit as number) || 0;
-  return {
-    remaining: Math.max(quota, planCredit),
-    details: (data.details as Record<string, unknown>) ?? data,
-  };
+  const data = (resp.data as any) ?? (resp as any);
+  const remaining = Number(data.remaining_quota) || 0;
+  const details = (data.details as Record<string, unknown>) ?? {};
+  const api = Number((details as any).api) || 0;
+  const plan = Number((details as any).plan_credit) || 0;
+  return { remaining, api, plan, details };
 }
 
 // --- Voices ---
@@ -101,6 +100,40 @@ export async function listAvatars(): Promise<{ avatars: Avatar[]; talking_photos
     avatars: resp.data?.avatars ?? [],
     talking_photos: resp.data?.talking_photos ?? [],
   };
+}
+
+// --- Upload Talking Photo ---
+
+interface UploadTalkingPhotoResponse {
+  code: number;
+  data: {
+    talking_photo_id: string;
+    talking_photo_url: string;
+  };
+  msg: string | null;
+}
+
+export async function uploadTalkingPhoto(imageBuffer: Buffer, mimeType: string): Promise<{ talking_photo_id: string; talking_photo_url: string }> {
+  const resp = await fetch("https://upload.heygen.com/v1/talking_photo", {
+    method: "POST",
+    headers: {
+      "X-Api-Key": getApiKey(),
+      "Content-Type": mimeType,
+    },
+    body: new Uint8Array(imageBuffer),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`HeyGen upload failed (${resp.status}): ${text}`);
+  }
+
+  const json = await resp.json() as UploadTalkingPhotoResponse;
+  if (json.code !== 100) {
+    throw new Error(`HeyGen upload error (code ${json.code}): ${json.msg}`);
+  }
+
+  return json.data;
 }
 
 // --- Video Generation ---

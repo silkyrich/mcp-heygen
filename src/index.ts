@@ -3,13 +3,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import {
   getCredits,
   listVoices,
   listAvatars,
+  uploadTalkingPhoto,
   generateVideo,
   getVideoStatus,
   type Voice,
@@ -34,11 +35,11 @@ server.tool(
   {},
   async () => {
     try {
-      const { remaining, details } = await getCredits();
+      const { remaining, api, plan, details } = await getCredits();
       return {
         content: [{
           type: "text" as const,
-          text: `HeyGen API credits remaining: ${remaining}\n\nDetails:\n${JSON.stringify(details, null, 2)}`,
+          text: `HeyGen credits:\n- **API credits**: ${api} (used for API video generation)\n- **Plan credits**: ${plan} (web dashboard only)\n- **Remaining quota**: ${remaining}\n\nDetails:\n${JSON.stringify(details, null, 2)}`,
         }],
       };
     } catch (err) {
@@ -136,7 +137,38 @@ server.tool(
   }
 );
 
-// --- Tool 4: generate_avatar_video ---
+// --- Tool 4: upload_talking_photo ---
+
+server.tool(
+  "upload_talking_photo",
+  "Upload a local image as a HeyGen talking photo avatar. The image should be a clear, front-facing portrait. Returns a talking_photo_id that can be used with generate_avatar_video (set avatar_type to 'talking_photo').",
+  {
+    image_path: z.string().describe("Absolute path to the image file (PNG or JPEG)"),
+  },
+  async ({ image_path }) => {
+    try {
+      const buffer = await readFile(image_path);
+      const ext = image_path.toLowerCase();
+      const mimeType = ext.endsWith(".png") ? "image/png" : "image/jpeg";
+
+      const { talking_photo_id, talking_photo_url } = await uploadTalkingPhoto(buffer, mimeType);
+
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Talking photo uploaded successfully.\n\n- **Talking Photo ID**: \`${talking_photo_id}\`\n- **Preview URL**: ${talking_photo_url}\n\nUse this ID with \`generate_avatar_video\` (set \`avatar_type\` to \`"talking_photo"\`) to create a video.`,
+        }],
+      };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+        isError: true,
+      };
+    }
+  }
+);
+
+// --- Tool 5: generate_avatar_video ---
 
 server.tool(
   "generate_avatar_video",
